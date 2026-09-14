@@ -1,0 +1,4 @@
+[submodule ".shared/productive-k3s-docs-theme"]
+	path = .shared/productive-k3s-docs-theme
+	url = git@github.com:productive-k3s/productive-k3s-docs-theme.git
+	branch = main

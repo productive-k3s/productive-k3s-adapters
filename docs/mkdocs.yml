@@ -1,0 +1,92 @@
+site_name: Productive K3S Adapters
+site_description: Convert external application definitions into Productive K3s artifacts.
+site_author: Productive K3S
+site_url: https://adapters.productive-k3s.io/
+repo_url: https://github.com/productive-k3s/productive-k3s-adapters
+repo_name: GitHub
+edit_uri: edit/main/docs/src/
+docs_dir: src
+site_dir: site
+
+theme:
+  name: material
+  custom_dir: src/overrides
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.indexes
+    - navigation.path
+    - navigation.sections
+    - navigation.expand
+    - navigation.footer
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: white
+      accent: blue
+  font: false
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - English:
+      - Home: en/index.md
+      - Product:
+          - Architecture: en/product/architecture.md
+          - Compose adapter: en/product/compose-adapter.md
+          - Resolver model: en/product/resolvers.md
+          - Output contract: en/product/output-contract.md
+      - User docs:
+          - Usage: en/user-docs/usage.md
+          - OpenShip workflow: en/user-docs/openship.md
+      - Developer docs:
+          - Development: en/developer-docs/index.md
+          - Adding adapters: en/developer-docs/adding-adapters.md
+          - Adding resolvers: en/developer-docs/adding-resolvers.md
+  - Español:
+      - Inicio: es/index.md
+      - Producto:
+          - Arquitectura: es/product/architecture.md
+          - Adapter Compose: es/product/compose-adapter.md
+          - Modelo de resolvers: es/product/resolvers.md
+          - Contrato de salida: es/product/output-contract.md
+      - Documentación de usuario:
+          - Uso: es/user-docs/usage.md
+          - Flujo OpenShip: es/user-docs/openship.md
+      - Documentación de desarrollo:
+          - Desarrollo: es/developer-docs/index.md
+          - Agregar adapters: es/developer-docs/adding-adapters.md
+          - Agregar resolvers: es/developer-docs/adding-resolvers.md
+
+extra:
+  pk3s:
+    footer_slogan_en: "Productive K3S Adapters: convert once, deploy as a native Productive K3s artifact."
+    footer_slogan_es: "Productive K3S Adapters: converti una vez y desplega como un artefacto nativo de Productive K3s."
+    contact_value: "contact@productive-k3s.io"
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/productive-k3s/productive-k3s-adapters
