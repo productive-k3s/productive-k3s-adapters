@@ -1,0 +1,11 @@
+apiVersion: adapters.productive-k3s.io/v1alpha1
+kind: Adaptation
+metadata:
+  name: control-plane
+  title: OpenShip self-hosted control plane for k3s
+spec:
+  producer: openship
+  adapter: compose
+  input: compose.yaml
+  stackName: openship-control-plane
+  targetPath: adapters/openship/control-plane

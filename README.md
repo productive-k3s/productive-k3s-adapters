@@ -19,7 +19,7 @@ resolver layer
    ├─ known services → dedicated Helm chart reference
    └─ generic services → Stakater Application values
    ↓
-Productive K3s Stack artifact
+Productive K3s Stack artifact or runnable adaptation candidate
    ↓
 Git / catalog / Productive K3s
 ```
@@ -45,22 +45,20 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e .
 
-pk3s-adapters convert compose examples/openship/compose.yaml \
-  --name openship-demo \
-  --output .generated/openship-demo
+make adaptations-build
 ```
 
 Inspect the generated artifact:
 
 ```bash
-find .generated/openship-demo -maxdepth 3 -type f -print
-cat .generated/openship-demo/stack.yaml
+find .generated/adaptations/openship/whoami-redis -maxdepth 3 -type f -print
+cat .generated/adaptations/openship/whoami-redis/source/stack.yaml
 ```
 
 Run validation without generating files:
 
 ```bash
-pk3s-adapters inspect compose examples/openship/compose.yaml
+make inspect-adaptation
 ```
 
 ## Design rule
