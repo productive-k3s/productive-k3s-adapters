@@ -1,4 +1,4 @@
-.PHONY: install install-dev validate-adaptation convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test lint docs-build docs-serve clean tag-release
+.PHONY: install install-dev validate validate-adaptation convert-example convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test lint docs-build docs-serve clean tag-release
 
 PYTHON ?= python3
 PYTHONPATH ?= src
@@ -11,8 +11,12 @@ install:
 install-dev:
 	$(PYTHON) -m pip install -e '.[dev,docs]'
 
+validate: validate-adaptation smoke-adaptation
+
 validate-adaptation:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m productive_k3s_adapters.cli validate compose $(ADAPTATION)/compose.yaml
+
+convert-example: convert-adaptation
 
 convert-adaptation:
 	rm -rf .generated/adaptations/openship/whoami-redis/source
