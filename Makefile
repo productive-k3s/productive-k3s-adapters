@@ -1,26 +1,48 @@
-.PHONY: install install-dev validate convert-example inspect-example test lint docs-build docs-serve clean tag-release
+.PHONY: install install-dev validate validate-adaptation convert-example convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test lint docs-build docs-serve clean tag-release
+
+PYTHON ?= python3
+PYTHONPATH ?= src
+ADAPTATION ?= adaptations/openship/whoami-redis
+ADAPTATION_NAME ?= openship-whoami-redis
 
 install:
-	python -m pip install -e .
+	$(PYTHON) -m pip install -e .
 
 install-dev:
-	python -m pip install -e '.[dev,docs]'
+	$(PYTHON) -m pip install -e '.[dev,docs]'
 
-validate:
-	python -m productive_k3s_adapters.cli validate compose examples/openship/compose.yaml
+validate: validate-adaptation smoke-adaptation
 
-convert-example:
-	rm -rf .generated/openship-demo
-	python -m productive_k3s_adapters.cli convert compose examples/openship/compose.yaml --name openship-demo --output .generated/openship-demo
+validate-adaptation:
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m productive_k3s_adapters.cli validate compose $(ADAPTATION)/compose.yaml
 
-inspect-example:
-	python -m productive_k3s_adapters.cli inspect compose examples/openship/compose.yaml
+convert-example: convert-adaptation
+
+convert-adaptation:
+	rm -rf .generated/adaptations/openship/whoami-redis/source
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m productive_k3s_adapters.cli convert compose $(ADAPTATION)/compose.yaml --name $(ADAPTATION_NAME) --output .generated/adaptations/openship/whoami-redis/source
+
+inspect-adaptation:
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m productive_k3s_adapters.cli inspect compose $(ADAPTATION)/compose.yaml
+
+smoke-adaptation: adaptations-build
+	test -f .generated/adaptations/openship/whoami-redis/source/stack.yaml
+	test -f .generated/adaptations/openship/whoami-redis/source/conversion-report.json
+	test -f .generated/adaptations/openship/whoami-redis/source/addons/web/values.yaml
+	test -f .generated/adaptations/openship/whoami-redis/source/addons/cache/values.yaml
+	test -f .generated/adaptations/openship/whoami-redis/package/stack.yaml
+	test -f .generated/adaptations/openship/whoami-redis/package/addons/openship-whoami-redis-web-0.1.0.tgz
+	test -f .generated/adaptations/openship/whoami-redis/package/addons/openship-whoami-redis-cache-0.1.0.tgz
+	test -f .generated/adaptations/openship/whoami-redis/openship-whoami-redis-0.1.0.tgz
+
+adaptations-build:
+	PYTHON=$(PYTHON) OUTPUT_DIR=.generated/adaptations ./scripts/build-adaptations.sh
 
 test:
-	python -m unittest discover -s tests -v
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m unittest discover -s tests -v
 
 lint:
-	ruff check src tests
+	PYTHONPATH=$(PYTHONPATH) ruff check src tests
 
 docs-build:
 	$(MAKE) -C ./docs docs-build

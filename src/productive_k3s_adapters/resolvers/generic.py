@@ -14,6 +14,10 @@ class StakaterApplicationResolver(Resolver):
             "enabled": True,
             "replicas": service.replicas,
             "image": {"repository": repository},
+            "containerSecurityContext": {
+                "readOnlyRootFilesystem": False,
+                "runAsNonRoot": False,
+            },
         }
         if tag:
             if tag.startswith("sha256:"):

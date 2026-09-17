@@ -21,14 +21,21 @@ class PostgreSQLResolver(_ImagePrefixResolver):
     repository = "https://charts.bitnami.com/bitnami"
 
     def resolve(self, service: Service) -> Resolution:
-        values = {}
+        values = {
+            "fullnameOverride": service.name,
+            "primary": {
+                "persistence": {
+                    "enabled": False,
+                },
+            },
+        }
         if service.environment.get("POSTGRES_DB"):
             values.setdefault("auth", {})["database"] = service.environment["POSTGRES_DB"]
         if service.environment.get("POSTGRES_USER"):
             values.setdefault("auth", {})["username"] = service.environment["POSTGRES_USER"]
         if service.environment.get("POSTGRES_PASSWORD"):
             values.setdefault("auth", {})["password"] = service.environment["POSTGRES_PASSWORD"]
-        return Resolution("known-service", self.chart, self.repository, None, values, ["Review persistence and credentials before production use."])
+        return Resolution("known-service", self.chart, self.repository, None, values, ["Persistence is disabled for generated smoke/control-plane adaptations; review state and credentials before production use."])
 
 
 class RedisResolver(_ImagePrefixResolver):
@@ -37,7 +44,19 @@ class RedisResolver(_ImagePrefixResolver):
     repository = "https://charts.bitnami.com/bitnami"
 
     def resolve(self, service: Service) -> Resolution:
-        return Resolution("known-service", self.chart, self.repository, None, {"architecture": "standalone"}, ["Review authentication and persistence before production use."])
+        values = {
+            "fullnameOverride": service.name,
+            "architecture": "standalone",
+            "auth": {
+                "enabled": False,
+            },
+            "master": {
+                "persistence": {
+                    "enabled": False,
+                },
+            },
+        }
+        return Resolution("known-service", self.chart, self.repository, None, values, ["Persistence is disabled for generated smoke adaptations; review state and credentials before production use."])
 
 
 class MinIOResolver(_ImagePrefixResolver):

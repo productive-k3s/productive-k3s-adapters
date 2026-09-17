@@ -1,0 +1,13 @@
+services:
+  web:
+    image: traefik/whoami:v1.10
+    environment:
+      APP_ENV: production
+      REDIS_HOST: cache
+    ports:
+      - "8080:80"
+    depends_on:
+      - cache
+
+  cache:
+    image: redis:7-alpine

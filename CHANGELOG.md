@@ -10,6 +10,6 @@ Initial scaffold and working Compose conversion pipeline.
 - Generic Stakater Application target.
 - PostgreSQL, Redis and MinIO resolvers.
 - Productive K3s Stack generator.
-- OpenShip hand-off example.
+- OpenShip hand-off adaptation.
 - Bilingual MkDocs documentation scaffold using the shared Productive K3s theme.
 - Unit tests and CI workflows.

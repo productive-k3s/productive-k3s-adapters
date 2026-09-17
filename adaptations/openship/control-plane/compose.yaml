@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: openship
+      POSTGRES_PASSWORD: openship
+      POSTGRES_DB: openship
+
+  redis:
+    image: redis:7-alpine
+    command:
+      - redis-server
+
+  api:
+    image: ghcr.io/oblien/openship-api:latest
+    environment:
+      NODE_ENV: production
+      CLOUD_MODE: "false"
+      DEPLOY_MODE: docker
+      PORT: "4000"
+      DATABASE_URL: postgresql://openship:openship@postgres:5432/openship
+      REDIS_URL: redis://redis-master:6379
+      OPENSHIP_REQUIRE_REDIS: "true"
+      OPENSHIP_HOST_CONTROL: "false"
+      OPENSHIP_AUTH_MODE: local
+      OPENSHIP_ALLOW_ZERO_AUTH: "false"
+      INTERNAL_TOKEN: productive-k3s-adapter-internal-token-change-me
+      BETTER_AUTH_SECRET: productive-k3s-adapter-better-auth-secret-change-me
+      OPENSHIP_PUBLIC_URL: http://localhost:3001
+      TRUST_PROXY: "true"
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+      - redis
+
+  dashboard:
+    image: ghcr.io/oblien/openship-dashboard:latest
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      INTERNAL_API_URL: http://api:4000
+      OPENSHIP_PUBLIC_URL: http://localhost:3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      - api

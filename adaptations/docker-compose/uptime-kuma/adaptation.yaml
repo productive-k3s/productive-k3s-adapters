@@ -1,0 +1,16 @@
+apiVersion: adapters.productive-k3s.io/v1alpha1
+kind: Adaptation
+metadata:
+  name: uptime-kuma
+  title: Docker Compose Uptime Kuma adaptation
+spec:
+  producer: docker-compose
+  adapter: compose
+  input: compose.yaml
+  stackName: docker-compose-uptime-kuma
+  targetPath: adapters/docker-compose/uptime-kuma
+  source:
+    type: docker-compose
+    url: https://github.com/louislam/uptime-kuma/blob/master/compose.yaml
+    ref: master
+    path: compose.yaml

@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from pathlib import Path
 
 from productive_k3s_adapters import __version__
 from productive_k3s_adapters.adapters.compose import parse_compose
@@ -69,7 +68,7 @@ def main(argv: list[str] | None = None) -> int:
             target = generate_stack(app, args.output, force=args.force)
             print(target)
             return 0
-    except Exception as exc:  # CLI boundary
+    except Exception as exc:  # noqa: BLE001 - CLI boundary converts failures into exit codes.
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
     return 1
