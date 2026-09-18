@@ -87,6 +87,7 @@ extra:
     footer_slogan_en: "Productive K3S Adapters: convert once, deploy as a native Productive K3s artifact."
     footer_slogan_es: "Productive K3S Adapters: converti una vez y desplega como un artefacto nativo de Productive K3s."
     contact_value: "contact@productive-k3s.io"
+    newsletter_turnstile_site_key: !ENV [NEWSLETTER_TURNSTILE_SITE_KEY, ""]
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/productive-k3s/productive-k3s-adapters
