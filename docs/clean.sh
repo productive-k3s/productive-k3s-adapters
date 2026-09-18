@@ -2,8 +2,16 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-rm -rf "${ROOT_DIR}/site" "${ROOT_DIR}/src/overrides"
-rm -f "${ROOT_DIR}/src/assets/stylesheets/extra.css"
-rm -f "${ROOT_DIR}/src/assets/images/argentina.png"
-rm -f "${ROOT_DIR}/src/assets/images/productive-k3s-icon-square-0.3x.png"
-rm -f "${ROOT_DIR}/src/assets/images/favicon.ico"
+PID_FILE="${ROOT_DIR}/.mkdocs.pid"
+LOG_FILE="${ROOT_DIR}/.mkdocs.log"
+
+if [[ -f "${PID_FILE}" ]]; then
+  existing_pid="$(cat "${PID_FILE}")"
+  if kill -0 "${existing_pid}" >/dev/null 2>&1; then
+    kill "${existing_pid}" >/dev/null 2>&1 || true
+  fi
+  rm -f "${PID_FILE}"
+fi
+
+rm -rf "${ROOT_DIR}/site" "${ROOT_DIR}/.venv"
+rm -f "${LOG_FILE}"

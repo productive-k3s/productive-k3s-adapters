@@ -11,6 +11,8 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      NEWSLETTER_TURNSTILE_SITE_KEY: ${{ vars.NEWSLETTER_TURNSTILE_SITE_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:

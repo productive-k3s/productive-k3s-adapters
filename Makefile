@@ -1,4 +1,4 @@
-.PHONY: install install-dev validate validate-adaptation convert-example convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test lint docs-build docs-serve clean tag-release
+.PHONY: install install-dev validate validate-adaptation convert-example convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test lint docs-build docs-serve docs-up docs-down clean tag-release
 
 PYTHON ?= python3
 PYTHONPATH ?= src
@@ -49,6 +49,12 @@ docs-build:
 
 docs-serve:
 	$(MAKE) -C ./docs docs-serve
+
+docs-up:
+	$(MAKE) -C ./docs docs-up
+
+docs-down:
+	$(MAKE) -C ./docs docs-down
 
 clean:
 	rm -rf .generated build dist *.egg-info src/*.egg-info
