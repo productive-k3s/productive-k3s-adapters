@@ -1,4 +1,4 @@
-.PHONY: install install-dev validate validate-adaptation convert-example convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test lint docs-build docs-serve docs-up docs-down clean tag-release
+.PHONY: install install-dev validate validate-adaptation convert-example convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test lint docs-build docs-serve docs-up docs-down test-logs-clean clean tag-release
 
 PYTHON ?= python3
 PYTHONPATH ?= src
@@ -55,6 +55,10 @@ docs-up:
 
 docs-down:
 	$(MAKE) -C ./docs docs-down
+
+test-logs-clean:
+	rm -rf test-artifacts runs coverage htmlcov .pytest_cache .coverage
+	rm -f coverage.out coverage.txt coverage.xml
 
 clean:
 	rm -rf .generated build dist *.egg-info src/*.egg-info
