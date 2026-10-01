@@ -18,9 +18,11 @@ class ComposeTests(unittest.TestCase):
         self.assertEqual(len(app.services), 2)
         by_name = {s.name: s for s in app.services}
         self.assertEqual(resolve_service(by_name["cache"]).chart, "bitnami/redis")
+        self.assertEqual(resolve_service(by_name["cache"]).version, "28.3.1")
         self.assertEqual(resolve_service(by_name["cache"]).values["fullnameOverride"], "cache")
         self.assertFalse(resolve_service(by_name["cache"]).values["master"]["persistence"]["enabled"])
         self.assertEqual(resolve_service(by_name["web"]).chart, "stakater/application")
+        self.assertEqual(resolve_service(by_name["web"]).version, "9.3.2")
         self.assertFalse(resolve_service(by_name["web"]).values["deployment"]["containerSecurityContext"]["runAsNonRoot"])
         self.assertEqual(by_name["web"].depends_on, ["cache"])
         self.assertEqual(by_name["web"].ports[0].container, 80)
@@ -34,8 +36,11 @@ class ComposeTests(unittest.TestCase):
             self.assertTrue((target / "addons/web/values.yaml").exists())
             self.assertTrue((target / "conversion-report.json").exists())
             self.assertTrue((target / "addons/web/addon.yaml").exists())
+            self.assertTrue((target / "addons/web/materials.lock.yaml").exists())
             self.assertTrue((target / "addons/web/scripts/install.sh").exists())
             self.assertTrue((target / "addons/cache/values.yaml").exists())
+            install_script = (target / "addons/web/scripts/install.sh").read_text()
+            self.assertIn('--version "9.3.2"', install_script)
 
     def test_docker_compose_producer_candidate(self):
         app = parse_compose(UPTIME_KUMA_COMPOSE, name="docker-compose-uptime-kuma")

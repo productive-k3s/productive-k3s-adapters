@@ -108,6 +108,9 @@ build_one() {
       --output "${source_dir}"
 
   cp "${metadata}" "${source_dir}/adaptation.yaml"
+  if [[ -f "${adaptation_dir}/materials.lock.yaml" ]]; then
+    cp "${adaptation_dir}/materials.lock.yaml" "${source_dir}/materials.lock.yaml"
+  fi
   version="$(yaml_stack_version "${source_dir}/stack.yaml")"
   [[ -n "${version}" ]] || version="0.1.0"
   package_dir="${output_root}/package"
@@ -148,6 +151,9 @@ build_one() {
   cp "${source_dir}/README.md" "${package_dir}/README.md"
   cp "${source_dir}/conversion-report.json" "${package_dir}/conversion-report.json"
   cp "${source_dir}/adaptation.yaml" "${package_dir}/adaptation.yaml"
+  if [[ -f "${source_dir}/materials.lock.yaml" ]]; then
+    cp "${source_dir}/materials.lock.yaml" "${package_dir}/materials.lock.yaml"
+  fi
 
   artifact="${output_root}/${stack_name}-${version}.tgz"
   tar -czf "${artifact}" -C "${package_dir}" .

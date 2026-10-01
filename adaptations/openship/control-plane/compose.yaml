@@ -12,7 +12,7 @@ services:
       - redis-server
 
   api:
-    image: ghcr.io/oblien/openship-api:latest
+    image: ghcr.io/oblien/openship-api@sha256:b92087209e7a12b70a501b7d4a997ec572cccb14a975d483d34739e3b10cf2af
     environment:
       NODE_ENV: production
       CLOUD_MODE: "false"
@@ -35,7 +35,7 @@ services:
       - redis
 
   dashboard:
-    image: ghcr.io/oblien/openship-dashboard:latest
+    image: ghcr.io/oblien/openship-dashboard@sha256:a2e67cd3b3db93b523b6065254429c3388c4584167ad1c00f36270bfe4397953
     environment:
       NODE_ENV: production
       PORT: "3001"

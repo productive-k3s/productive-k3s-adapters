@@ -19,6 +19,7 @@ class PostgreSQLResolver(_ImagePrefixResolver):
     image_names = ("postgres", "postgresql")
     chart = "bitnami/postgresql"
     repository = "https://charts.bitnami.com/bitnami"
+    chart_version = "18.12.4"
 
     def resolve(self, service: Service) -> Resolution:
         values = {
@@ -35,13 +36,14 @@ class PostgreSQLResolver(_ImagePrefixResolver):
             values.setdefault("auth", {})["username"] = service.environment["POSTGRES_USER"]
         if service.environment.get("POSTGRES_PASSWORD"):
             values.setdefault("auth", {})["password"] = service.environment["POSTGRES_PASSWORD"]
-        return Resolution("known-service", self.chart, self.repository, None, values, ["Persistence is disabled for generated smoke/control-plane adaptations; review state and credentials before production use."])
+        return Resolution("known-service", self.chart, self.repository, self.chart_version, values, ["Persistence is disabled for generated smoke/control-plane adaptations; review state and credentials before production use."])
 
 
 class RedisResolver(_ImagePrefixResolver):
     image_names = ("redis",)
     chart = "bitnami/redis"
     repository = "https://charts.bitnami.com/bitnami"
+    chart_version = "28.3.1"
 
     def resolve(self, service: Service) -> Resolution:
         values = {
@@ -56,7 +58,7 @@ class RedisResolver(_ImagePrefixResolver):
                 },
             },
         }
-        return Resolution("known-service", self.chart, self.repository, None, values, ["Persistence is disabled for generated smoke adaptations; review state and credentials before production use."])
+        return Resolution("known-service", self.chart, self.repository, self.chart_version, values, ["Persistence is disabled for generated smoke adaptations; review state and credentials before production use."])
 
 
 class MinIOResolver(_ImagePrefixResolver):

@@ -1,0 +1,31 @@
+apiVersion: materials.productive-k3s.io/v1alpha1
+kind: MaterialsLock
+metadata:
+  owner: productive-k3s-addons
+  package: openship-whoami-redis
+  version: 0.1.0
+spec:
+  materials:
+    - id: application-chart
+      type: helm-chart
+      name: application
+      version: 9.3.2
+      source: https://stakater.github.io/stakater-charts
+      pinPolicy: exact
+      required: true
+      updateSource: {type: helm-index}
+    - id: whoami-image
+      type: container-image
+      name: traefik/whoami
+      version: v1.10
+      source: https://hub.docker.com/r/traefik/whoami
+      pinPolicy: exact-tag
+      required: true
+    - id: redis-chart
+      type: helm-chart
+      name: redis
+      version: 28.3.1
+      source: https://charts.bitnami.com/bitnami
+      pinPolicy: exact
+      required: true
+      updateSource: {type: helm-index}

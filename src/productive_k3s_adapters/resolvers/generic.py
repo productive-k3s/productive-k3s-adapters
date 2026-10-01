@@ -5,6 +5,8 @@ from productive_k3s_adapters.resolvers.base import Resolution, Resolver, image_r
 
 
 class StakaterApplicationResolver(Resolver):
+    chart_version = "9.3.2"
+
     def matches(self, service: Service) -> bool:
         return True
 
@@ -58,7 +60,7 @@ class StakaterApplicationResolver(Resolver):
             kind="generic-application",
             chart="stakater/application",
             repository="https://stakater.github.io/stakater-charts",
-            version=None,
+            version=self.chart_version,
             values=values,
             notes=notes,
         )

@@ -1,0 +1,50 @@
+apiVersion: materials.productive-k3s.io/v1alpha1
+kind: MaterialsLock
+metadata:
+  owner: productive-k3s-addons
+  package: openship-control-plane
+  version: 0.1.0
+spec:
+  materials:
+    - id: application-chart
+      type: helm-chart
+      name: application
+      version: 9.3.2
+      source: https://stakater.github.io/stakater-charts
+      pinPolicy: exact
+      required: true
+      updateSource: {type: helm-index}
+    - id: postgresql-chart
+      type: helm-chart
+      name: postgresql
+      version: 18.12.4
+      source: https://charts.bitnami.com/bitnami
+      pinPolicy: exact
+      required: true
+      updateSource: {type: helm-index}
+    - id: redis-chart
+      type: helm-chart
+      name: redis
+      version: 28.3.1
+      source: https://charts.bitnami.com/bitnami
+      pinPolicy: exact
+      required: true
+      updateSource: {type: helm-index}
+    - id: openship-api-image
+      type: container-image
+      name: ghcr.io/oblien/openship-api
+      version: 0.6.5
+      digest: sha256:b92087209e7a12b70a501b7d4a997ec572cccb14a975d483d34739e3b10cf2af
+      source: https://github.com/oblien/openship
+      pinPolicy: exact-digest
+      required: true
+      updateSource: {type: github-release, repository: oblien/openship}
+    - id: openship-dashboard-image
+      type: container-image
+      name: ghcr.io/oblien/openship-dashboard
+      version: 0.6.5
+      digest: sha256:a2e67cd3b3db93b523b6065254429c3388c4584167ad1c00f36270bfe4397953
+      source: https://github.com/oblien/openship
+      pinPolicy: exact-digest
+      required: true
+      updateSource: {type: github-release, repository: oblien/openship}

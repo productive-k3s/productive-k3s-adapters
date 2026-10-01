@@ -7,7 +7,7 @@ from pathlib import Path
 
 from productive_k3s_adapters.model import Application, Service
 from productive_k3s_adapters.resolvers import resolve_service
-from productive_k3s_adapters.resolvers.base import Resolution
+from productive_k3s_adapters.resolvers.base import Resolution, image_repository_and_tag
 from productive_k3s_adapters.targets.yamlio import write_yaml
 
 
@@ -62,10 +62,49 @@ def _addon_descriptor(app: Application, service: Service, resolution: Resolution
     }
 
 
+def _materials_lock(app: Application, service: Service, resolution: Resolution) -> dict:
+    materials = [
+        {
+            "id": "helm-chart",
+            "type": "helm-chart",
+            "name": resolution.chart.split("/", 1)[-1],
+            "version": resolution.version,
+            "source": resolution.repository,
+            "pinPolicy": "exact",
+            "required": True,
+            "updateSource": {"type": "helm-index"},
+        }
+    ]
+    if resolution.kind == "generic-application":
+        repository, identity = image_repository_and_tag(service.image)
+        image = {
+            "id": "container-image",
+            "type": "container-image",
+            "name": repository,
+            "version": identity,
+            "source": repository,
+            "pinPolicy": "exact-tag",
+            "required": True,
+        }
+        if identity and identity.startswith("sha256:"):
+            image["digest"] = identity
+            image["pinPolicy"] = "exact-digest"
+        materials.append(image)
+    return {
+        "apiVersion": "materials.productive-k3s.io/v1alpha1",
+        "kind": "MaterialsLock",
+        "metadata": {
+            "owner": "productive-k3s-addons",
+            "package": f"{app.name}-{service.name}",
+            "version": "0.1.0",
+        },
+        "spec": {"materials": materials},
+    }
 def _generate_addon(app: Application, service: Service, resolution: Resolution, addon_dir: Path) -> None:
     scripts = addon_dir / "scripts"
     scripts.mkdir(parents=True)
     write_yaml(addon_dir / "addon.yaml", _addon_descriptor(app, service, resolution))
+    write_yaml(addon_dir / "materials.lock.yaml", _materials_lock(app, service, resolution))
     write_yaml(addon_dir / "values.yaml", resolution.values)
 
     alias = _repo_alias(resolution)

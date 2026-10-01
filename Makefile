@@ -28,9 +28,11 @@ inspect-adaptation:
 smoke-adaptation: adaptations-build
 	test -f .generated/adaptations/openship/whoami-redis/source/stack.yaml
 	test -f .generated/adaptations/openship/whoami-redis/source/conversion-report.json
+	test -f .generated/adaptations/openship/whoami-redis/source/materials.lock.yaml
 	test -f .generated/adaptations/openship/whoami-redis/source/addons/web/values.yaml
 	test -f .generated/adaptations/openship/whoami-redis/source/addons/cache/values.yaml
 	test -f .generated/adaptations/openship/whoami-redis/package/stack.yaml
+	test -f .generated/adaptations/openship/whoami-redis/package/materials.lock.yaml
 	test -f .generated/adaptations/openship/whoami-redis/package/addons/openship-whoami-redis-web-0.1.0.tgz
 	test -f .generated/adaptations/openship/whoami-redis/package/addons/openship-whoami-redis-cache-0.1.0.tgz
 	test -f .generated/adaptations/openship/whoami-redis/openship-whoami-redis-0.1.0.tgz
