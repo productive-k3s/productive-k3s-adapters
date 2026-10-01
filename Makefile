@@ -1,4 +1,4 @@
-.PHONY: install install-dev validate validate-adaptation convert-example convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test lint docs-build docs-serve docs-up docs-down test-logs-clean clean tag-release
+.PHONY: install install-dev validate validate-adaptation convert-example convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test test-coverage lint docs-build docs-serve docs-up docs-down test-logs-clean clean tag-release
 
 PYTHON ?= python3
 PYTHONPATH ?= src
@@ -42,6 +42,9 @@ adaptations-build:
 
 test:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m unittest discover -s tests -v
+
+test-coverage:
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m pytest --cov=productive_k3s_adapters --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=80
 
 lint:
 	PYTHONPATH=$(PYTHONPATH) ruff check src tests
