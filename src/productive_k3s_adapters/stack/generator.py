@@ -7,7 +7,7 @@ from pathlib import Path
 
 from productive_k3s_adapters.model import Application, Service
 from productive_k3s_adapters.resolvers import resolve_service
-from productive_k3s_adapters.resolvers.base import Resolution, image_repository_and_tag
+from productive_k3s_adapters.resolvers.base import Resolution
 from productive_k3s_adapters.targets.yamlio import write_yaml
 
 
@@ -26,6 +26,25 @@ def _write_script(path: Path, content: str) -> None:
     path.chmod(0o755)
 
 
+def _write_contract_yaml(path: Path, data: dict) -> None:
+    write_yaml(path, data)
+    content = path.read_text()
+    path.write_text(content.replace("        distros:\n        - ", "        distros:\n          - "))
+
+
+def _compatibility() -> dict:
+    return {
+        "requires": {
+            "core": {
+                "contract": "artifact/v1",
+                "minVersion": "0.9.6",
+                "maxVersionExclusive": "0.10.0",
+            },
+            "kubernetes": {"distros": ["k3s"]},
+        }
+    }
+
+
 def _addon_descriptor(app: Application, service: Service, resolution: Resolution) -> dict:
     exposure = {}
     if service.ports:
@@ -40,6 +59,7 @@ def _addon_descriptor(app: Application, service: Service, resolution: Resolution
             }
         }
     spec = {
+        "compatibility": _compatibility(),
         "type": "helm",
         "impact": {
             "cluster": True,
@@ -57,38 +77,42 @@ def _addon_descriptor(app: Application, service: Service, resolution: Resolution
     return {
         "apiVersion": "addons.productive-k3s.io/v1",
         "kind": "Addon",
-        "metadata": {"name": f"{app.name}-{service.name}", "version": "0.1.0", "category": "generated"},
+        "metadata": {
+            "name": f"{app.name}-{service.name}",
+            "version": "0.1.0",
+            "sourceRevision": "development",
+            "category": "generated",
+        },
         "spec": spec,
     }
 
 
 def _materials_lock(app: Application, service: Service, resolution: Resolution) -> dict:
-    materials = [
-        {
-            "id": "helm-chart",
-            "type": "helm-chart",
-            "name": resolution.chart.split("/", 1)[-1],
-            "version": resolution.version,
-            "source": resolution.repository,
-            "pinPolicy": "exact",
-            "required": True,
-            "updateSource": {"type": "helm-index"},
-        }
-    ]
-    if resolution.kind == "generic-application":
-        repository, identity = image_repository_and_tag(service.image)
+    chart = {
+        "id": "helm-chart",
+        "type": "helm-chart",
+        "name": resolution.chart.split("/", 1)[-1],
+        "version": resolution.version,
+        "source": resolution.repository,
+        "pinPolicy": "exact-digest" if resolution.chart_digest else "exact",
+        "required": True,
+        "updateSource": {"type": "helm-index"},
+    }
+    if resolution.chart_digest:
+        chart["digest"] = resolution.chart_digest
+    materials = [chart]
+    for material in resolution.images:
         image = {
-            "id": "container-image",
+            "id": material.id,
             "type": "container-image",
-            "name": repository,
-            "version": identity,
-            "source": repository,
-            "pinPolicy": "exact-tag",
-            "required": True,
+            "name": material.repository,
+            "version": material.version,
+            "source": material.source or material.repository,
+            "pinPolicy": "exact-digest" if material.digest else "exact-tag",
+            "required": material.required,
         }
-        if identity and identity.startswith("sha256:"):
-            image["digest"] = identity
-            image["pinPolicy"] = "exact-digest"
+        if material.digest:
+            image["digest"] = material.digest
         materials.append(image)
     return {
         "apiVersion": "materials.productive-k3s.io/v1alpha1",
@@ -100,10 +124,12 @@ def _materials_lock(app: Application, service: Service, resolution: Resolution) 
         },
         "spec": {"materials": materials},
     }
+
+
 def _generate_addon(app: Application, service: Service, resolution: Resolution, addon_dir: Path) -> None:
     scripts = addon_dir / "scripts"
     scripts.mkdir(parents=True)
-    write_yaml(addon_dir / "addon.yaml", _addon_descriptor(app, service, resolution))
+    _write_contract_yaml(addon_dir / "addon.yaml", _addon_descriptor(app, service, resolution))
     write_yaml(addon_dir / "materials.lock.yaml", _materials_lock(app, service, resolution))
     write_yaml(addon_dir / "values.yaml", resolution.values)
 
@@ -112,6 +138,26 @@ def _generate_addon(app: Application, service: Service, resolution: Resolution, 
     release = f"{app.name}-{service.name}"
     chart = resolution.chart
     version_arg = f' --version "{resolution.version}"' if resolution.version else ""
+    chart_name = chart.split("/", 1)[-1]
+    if resolution.chart_digest and resolution.version:
+        install_prepare = f'''  local chart_dir chart_archive actual_digest
+  chart_dir="$(mktemp -d)"
+  trap 'rm -rf "${{chart_dir}}"' RETURN
+  "${{HELM_BIN}}" pull "{chart_name}" --repo "{resolution.repository}" --version "{resolution.version}" --destination "${{chart_dir}}"
+  chart_archive="${{chart_dir}}/{chart_name}-{resolution.version}.tgz"
+  actual_digest="sha256:$(sha256sum "${{chart_archive}}" | awk '{{print $1}}')"
+  if [[ "${{actual_digest}}" != "{resolution.chart_digest}" ]]; then
+    echo "Chart digest mismatch for {chart_name} {resolution.version}: expected {resolution.chart_digest}, got ${{actual_digest}}" >&2
+    return 1
+  fi
+'''
+        install_chart = '"${chart_archive}"'
+        version_arg = ""
+    else:
+        install_prepare = f'''  "${{HELM_BIN}}" repo add {alias} {resolution.repository} >/dev/null 2>&1 || true
+  "${{HELM_BIN}}" repo update >/dev/null
+'''
+        install_chart = chart
 
     _write_script(
         scripts / "install.sh",
@@ -124,9 +170,7 @@ RELEASE_NAME="${{PK3S_ADDON_RELEASE_NAME:-{release}}}"
 NAMESPACE="${{PK3S_ADDON_NAMESPACE:-{namespace}}}"
 
 pk3s_addon_install() {{
-  "${{HELM_BIN}}" repo add {alias} {resolution.repository} >/dev/null 2>&1 || true
-  "${{HELM_BIN}}" repo update >/dev/null
-  "${{HELM_BIN}}" upgrade --install "${{RELEASE_NAME}}" {chart}{version_arg} \\
+{install_prepare}  "${{HELM_BIN}}" upgrade --install "${{RELEASE_NAME}}" {install_chart}{version_arg} \\
     --namespace "${{NAMESPACE}}" \\
     --create-namespace \\
     -f "${{VALUES_FILE}}"
@@ -218,14 +262,15 @@ def generate_stack(app: Application, output: str | Path, force: bool = False) ->
     stack = {
         "apiVersion": "stacks.productive-k3s.io/v1alpha1",
         "kind": "Stack",
-        "metadata": {"name": app.name, "version": "0.1.0"},
+        "metadata": {"name": app.name, "version": "0.1.0", "sourceRevision": "development"},
         "spec": {
+            "compatibility": _compatibility(),
             "generatedBy": "productive-k3s-adapters",
             "source": {"type": app.source_type, "file": app.source_file},
             "addons": stack_addons,
         },
     }
-    write_yaml(target / "stack.yaml", stack)
+    _write_contract_yaml(target / "stack.yaml", stack)
     (target / "conversion-report.json").write_text(json.dumps(report, indent=2) + "\n")
     (target / "README.md").write_text(
         f"# {app.name}\n\nGenerated by Productive K3s Adapters.\n\n"

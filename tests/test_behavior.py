@@ -1,4 +1,6 @@
 import json
+import os
+import subprocess
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -11,7 +13,11 @@ from productive_k3s_adapters.adapters.compose.parser import ComposeError, parse_
 from productive_k3s_adapters.cli import _application, main
 from productive_k3s_adapters.model import Application, Port, Service, Volume
 from productive_k3s_adapters.resolvers import resolve_service
-from productive_k3s_adapters.resolvers.base import Resolver, image_repository_and_tag
+from productive_k3s_adapters.resolvers.base import (
+    Resolver,
+    image_repository_and_tag,
+    parse_image_reference,
+)
 from productive_k3s_adapters.stack import generate_stack
 
 
@@ -76,10 +82,21 @@ class ResolverBehaviorTests(unittest.TestCase):
         self.assertEqual(image_repository_and_tag("app"), ("app", None))
         self.assertEqual(image_repository_and_tag("registry:5000/app:1"), ("registry:5000/app", "1"))
         self.assertEqual(image_repository_and_tag("app@sha256:abc"), ("app", "sha256:abc"))
+        self.assertEqual(
+            parse_image_reference("registry:5000/app:1@sha256:abc"),
+            ("registry:5000/app", "1", "sha256:abc"),
+        )
 
     def test_known_resolvers_map_configuration(self):
         postgres = resolve_service(Service("db", "postgres:16", environment={"POSTGRES_DB": "app", "POSTGRES_USER": "user", "POSTGRES_PASSWORD": "secret"}))
         self.assertEqual(postgres.values["auth"], {"database": "app", "username": "user", "password": "secret"})
+        self.assertEqual(postgres.values["image"]["repository"], "bitnamilegacy/postgresql")
+        self.assertTrue(postgres.values["image"]["digest"].startswith("sha256:"))
+        self.assertEqual(postgres.chart_digest, "sha256:cdea1be659dd2c9b573adaee286b426911bcc4ddd4d7e0111df65309e38669fb")
+        redis = resolve_service(Service("cache", "redis:7"))
+        self.assertEqual(redis.values["image"]["tag"], "8.2.1-debian-12-r0")
+        self.assertEqual(len(redis.images), 5)
+        self.assertFalse(redis.images[1].required)
         minio = resolve_service(Service("objects", "quay.io/minio/minio:latest", environment={"MINIO_ROOT_USER": "root", "MINIO_ROOT_PASSWORD": "secret"}))
         self.assertEqual(minio.values, {"rootUser": "root", "rootPassword": "secret"})
 
@@ -92,6 +109,16 @@ class ResolverBehaviorTests(unittest.TestCase):
         self.assertEqual(list(deployment["env"]), ["A", "B"])
         self.assertEqual(resolution.values["service"]["ports"][0]["port"], 80)
         self.assertTrue(resolution.notes)
+
+    def test_generic_resolver_preserves_tag_and_digest(self):
+        service = Service("web", "example/app:1.2.3@sha256:abc")
+        resolution = resolve_service(service)
+        self.assertEqual(
+            resolution.values["deployment"]["image"],
+            {"repository": "example/app", "tag": "1.2.3", "digest": "sha256:abc"},
+        )
+        self.assertEqual(resolution.images[0].version, "1.2.3")
+        self.assertEqual(resolution.images[0].digest, "sha256:abc")
 
     def test_base_resolver_is_abstract_by_contract(self):
         resolver = Resolver()
@@ -156,6 +183,48 @@ class GeneratorBehaviorTests(unittest.TestCase):
             image = lock["spec"]["materials"][1]
             self.assertEqual(image["digest"], "sha256:abc")
             self.assertEqual(image["pinPolicy"], "exact-digest")
+            chart = lock["spec"]["materials"][0]
+            self.assertEqual(chart["pinPolicy"], "exact-digest")
+            install = (target / "addons/web/scripts/install.sh").read_text()
+            self.assertIn('helm', install)
+            self.assertIn('sha256:1c17fecf71c676868282a74462d82c7b252b244f2a2a3cf8f56b2825298f59c0', install)
+            self.assertIn('sha256sum', install)
+
+    def test_generated_install_rejects_chart_digest_mismatch(self):
+        app = Application(
+            name="demo",
+            services=[Service("web", "example/app:1@sha256:abc")],
+            source_type="test",
+            source_file="fixture",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = generate_stack(app, root / "out")
+            fake_helm = root / "helm"
+            fake_helm.write_text(
+                "#!/usr/bin/env bash\n"
+                "set -euo pipefail\n"
+                "if [[ $1 == pull ]]; then\n"
+                "  destination=''\n"
+                "  while (($#)); do\n"
+                "    if [[ $1 == --destination ]]; then destination=$2; break; fi\n"
+                "    shift\n"
+                "  done\n"
+                "  printf corrupt >\"${destination}/application-9.3.2.tgz\"\n"
+                "  exit 0\n"
+                "fi\n"
+                "exit 99\n"
+            )
+            fake_helm.chmod(0o755)
+            result = subprocess.run(
+                [str(target / "addons/web/scripts/install.sh")],
+                env={**os.environ, "PK3S_HELM_BIN": str(fake_helm)},
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("Chart digest mismatch", result.stderr)
 
 
 if __name__ == "__main__":
