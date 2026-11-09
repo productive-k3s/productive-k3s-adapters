@@ -1,4 +1,4 @@
-.PHONY: install install-dev validate validate-adaptation convert-example convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test lint docs-build docs-serve docs-up docs-down test-logs-clean clean tag-release
+.PHONY: install install-dev validate validate-adaptation convert-example convert-adaptation inspect-adaptation smoke-adaptation adaptations-build test test-coverage lint docs-build docs-serve docs-up docs-down test-logs-clean clean tag-release
 
 PYTHON ?= python3
 PYTHONPATH ?= src
@@ -28,9 +28,11 @@ inspect-adaptation:
 smoke-adaptation: adaptations-build
 	test -f .generated/adaptations/openship/whoami-redis/source/stack.yaml
 	test -f .generated/adaptations/openship/whoami-redis/source/conversion-report.json
+	test -f .generated/adaptations/openship/whoami-redis/source/materials.lock.yaml
 	test -f .generated/adaptations/openship/whoami-redis/source/addons/web/values.yaml
 	test -f .generated/adaptations/openship/whoami-redis/source/addons/cache/values.yaml
 	test -f .generated/adaptations/openship/whoami-redis/package/stack.yaml
+	test -f .generated/adaptations/openship/whoami-redis/package/materials.lock.yaml
 	test -f .generated/adaptations/openship/whoami-redis/package/addons/openship-whoami-redis-web-0.1.0.tgz
 	test -f .generated/adaptations/openship/whoami-redis/package/addons/openship-whoami-redis-cache-0.1.0.tgz
 	test -f .generated/adaptations/openship/whoami-redis/openship-whoami-redis-0.1.0.tgz
@@ -40,6 +42,9 @@ adaptations-build:
 
 test:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m unittest discover -s tests -v
+
+test-coverage:
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) -m pytest --cov=productive_k3s_adapters --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=80
 
 lint:
 	PYTHONPATH=$(PYTHONPATH) ruff check src tests

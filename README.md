@@ -61,6 +61,19 @@ Run validation without generating files:
 make inspect-adaptation
 ```
 
+## Software Materials
+
+Each maintained adaptation declares a `materials.lock.yaml`. Conversion emits
+a package lock for every generated Addon, pins each Helm chart version, and
+preserves image tags or immutable digests from the source definition. Ops
+copies these declarations into Addons during the cross-repository handoff;
+publication then embeds resolved BOMs in both generated Addons and their
+containing Stack.
+
+Floating release inputs such as `latest` are not valid adaptation sources.
+Exact image tags without a registry digest remain visible as partially pinned
+until an intentional digest migration is made.
+
 ## Design rule
 
 > A Productive K3s adapter converts external specifications into the Productive K3s standard at build time. It does not import or translate them on the fly during deployment.

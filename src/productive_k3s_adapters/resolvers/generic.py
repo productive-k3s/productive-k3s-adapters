@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 from productive_k3s_adapters.model import Service
-from productive_k3s_adapters.resolvers.base import Resolution, Resolver, image_repository_and_tag
+from productive_k3s_adapters.resolvers.base import (
+    ImageMaterial,
+    Resolution,
+    Resolver,
+    parse_image_reference,
+)
 
 
 class StakaterApplicationResolver(Resolver):
+    chart_version = "9.3.2"
+    chart_digest = "sha256:1c17fecf71c676868282a74462d82c7b252b244f2a2a3cf8f56b2825298f59c0"
+
     def matches(self, service: Service) -> bool:
         return True
 
     def resolve(self, service: Service) -> Resolution:
-        repository, tag = image_repository_and_tag(service.image)
+        repository, tag, digest = parse_image_reference(service.image)
         deployment: dict = {
             "enabled": True,
             "replicas": service.replicas,
@@ -20,10 +28,9 @@ class StakaterApplicationResolver(Resolver):
             },
         }
         if tag:
-            if tag.startswith("sha256:"):
-                deployment["image"]["digest"] = tag
-            else:
-                deployment["image"]["tag"] = tag
+            deployment["image"]["tag"] = tag
+        if digest:
+            deployment["image"]["digest"] = digest
         if service.command:
             deployment["command"] = service.command
         if service.environment:
@@ -58,7 +65,17 @@ class StakaterApplicationResolver(Resolver):
             kind="generic-application",
             chart="stakater/application",
             repository="https://stakater.github.io/stakater-charts",
-            version=None,
+            version=self.chart_version,
             values=values,
             notes=notes,
+            chart_digest=self.chart_digest,
+            images=(
+                ImageMaterial(
+                    id="container-image",
+                    repository=repository,
+                    version=tag or digest or "unversioned",
+                    digest=digest or "",
+                    source=repository,
+                ),
+            ),
         )

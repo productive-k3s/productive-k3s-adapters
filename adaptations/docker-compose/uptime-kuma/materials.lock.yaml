@@ -1,0 +1,25 @@
+apiVersion: materials.productive-k3s.io/v1alpha1
+kind: MaterialsLock
+metadata:
+  owner: productive-k3s-addons
+  package: docker-compose-uptime-kuma
+  version: 0.1.0
+spec:
+  materials:
+    - id: application-chart
+      type: helm-chart
+      name: application
+      version: 9.3.2
+      digest: sha256:1c17fecf71c676868282a74462d82c7b252b244f2a2a3cf8f56b2825298f59c0
+      source: https://stakater.github.io/stakater-charts
+      pinPolicy: exact-digest
+      required: true
+      updateSource: {type: helm-index}
+    - id: uptime-kuma-image
+      type: container-image
+      name: louislam/uptime-kuma
+      version: "2"
+      digest: sha256:e88415a90dd2f7efecdbc18de0490aff292764a3ac471531bf1d0481725591bd
+      source: https://hub.docker.com/r/louislam/uptime-kuma
+      pinPolicy: exact-digest
+      required: true

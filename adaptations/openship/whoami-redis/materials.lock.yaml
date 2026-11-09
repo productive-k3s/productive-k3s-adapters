@@ -1,0 +1,74 @@
+apiVersion: materials.productive-k3s.io/v1alpha1
+kind: MaterialsLock
+metadata:
+  owner: productive-k3s-addons
+  package: openship-whoami-redis
+  version: 0.1.0
+spec:
+  materials:
+    - id: application-chart
+      type: helm-chart
+      name: application
+      version: 9.3.2
+      digest: sha256:1c17fecf71c676868282a74462d82c7b252b244f2a2a3cf8f56b2825298f59c0
+      source: https://stakater.github.io/stakater-charts
+      pinPolicy: exact-digest
+      required: true
+      updateSource: {type: helm-index}
+    - id: whoami-image
+      type: container-image
+      name: traefik/whoami
+      version: v1.10
+      digest: sha256:1699d99cb4b9acc17f74ca670b3d8d0b7ba27c948b3445f0593b58ebece92f04
+      source: https://hub.docker.com/r/traefik/whoami
+      pinPolicy: exact-digest
+      required: true
+    - id: redis-chart
+      type: helm-chart
+      name: redis
+      version: 28.3.1
+      digest: sha256:4dacf5a4f67aca6d1565b0bb9fcd0343b22237efd14621cd47c0598f747c1092
+      source: https://charts.bitnami.com/bitnami
+      pinPolicy: exact-digest
+      required: true
+      updateSource: {type: helm-index}
+    - id: redis-image
+      type: container-image
+      name: docker.io/bitnamilegacy/redis
+      version: 8.2.1-debian-12-r0
+      digest: sha256:25bf63f3caf75af4628c0dfcf39859ad1ac8abe135be85e99699f9637b16dc28
+      source: https://hub.docker.com/r/bitnamilegacy/redis
+      pinPolicy: exact-digest
+      required: true
+    - id: redis-sentinel-image
+      type: container-image
+      name: docker.io/bitnamilegacy/redis-sentinel
+      version: 8.2.1-debian-12-r0
+      digest: sha256:0ca3ea1d2f823c2d9265e0d9e682dc435f219f8d3385aed75b5bb0f365f516a9
+      source: https://hub.docker.com/r/bitnamilegacy/redis-sentinel
+      pinPolicy: exact-digest
+      required: false
+    - id: redis-exporter-image
+      type: container-image
+      name: docker.io/bitnamilegacy/redis-exporter
+      version: 1.76.0-debian-12-r0
+      digest: sha256:d111b8a14d96f7edd67324776d6801b76023035d9390d03fbb13d1c21bda8b88
+      source: https://hub.docker.com/r/bitnamilegacy/redis-exporter
+      pinPolicy: exact-digest
+      required: false
+    - id: kubectl-image
+      type: container-image
+      name: docker.io/bitnamilegacy/kubectl
+      version: 1.33.4-debian-12-r0
+      digest: sha256:ed0b31a0508da84ee655c5c6e01bd3897fc56ad6cf69debb27fa1893a06d2246
+      source: https://hub.docker.com/r/bitnamilegacy/kubectl
+      pinPolicy: exact-digest
+      required: false
+    - id: os-shell-image
+      type: container-image
+      name: docker.io/bitnamilegacy/os-shell
+      version: 12-debian-12-r51
+      digest: sha256:77e65e9d633ec1463f8bea185763aa7ef91e5ddbe0b60beb1b0b5d4da58882b6
+      source: https://hub.docker.com/r/bitnamilegacy/os-shell
+      pinPolicy: exact-digest
+      required: false
