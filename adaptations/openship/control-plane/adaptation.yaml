@@ -8,4 +8,5 @@ spec:
   adapter: compose
   input: compose.yaml
   stackName: openship-control-plane
+  packageVersion: 0.1.1
   targetPath: adapters/openship/control-plane

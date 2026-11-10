@@ -152,9 +152,20 @@ class CliBehaviorTests(unittest.TestCase):
             self.assertEqual(json.loads(output)["services"][0]["resolver"], "generic-application")
 
             target = Path(tmp) / "generated"
-            status, output, _ = self.invoke(["convert", "compose", str(source), "-o", str(target)])
+            status, output, _ = self.invoke(
+                ["convert", "compose", str(source), "-o", str(target), "--package-version", "0.1.1"]
+            )
             self.assertEqual(status, 0)
             self.assertEqual(Path(output.strip()), target)
+            self.assertEqual(yaml.safe_load((target / "stack.yaml").read_text())["metadata"]["version"], "0.1.1")
+            self.assertEqual(
+                yaml.safe_load((target / "addons/app/addon.yaml").read_text())["metadata"]["version"],
+                "0.1.1",
+            )
+            self.assertEqual(
+                yaml.safe_load((target / "addons/app/materials.lock.yaml").read_text())["metadata"]["version"],
+                "0.1.1",
+            )
             status, _, error = self.invoke(["convert", "compose", str(source), "-o", str(target)])
             self.assertEqual(status, 2)
             self.assertIn("Use --force", error)
@@ -170,6 +181,17 @@ class CliBehaviorTests(unittest.TestCase):
 
 
 class GeneratorBehaviorTests(unittest.TestCase):
+    def test_rejects_invalid_package_version(self):
+        app = Application(
+            name="demo",
+            services=[Service("web", "example/app:1")],
+            source_type="test",
+            source_file="fixture",
+            package_version="development",
+        )
+        with tempfile.TemporaryDirectory() as tmp, self.assertRaisesRegex(ValueError, "Invalid adaptation package version"):
+            generate_stack(app, Path(tmp) / "out")
+
     def test_generated_digest_material_and_unknown_chart_alias(self):
         app = Application(
             name="demo",

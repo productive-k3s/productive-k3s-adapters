@@ -8,6 +8,7 @@ spec:
   adapter: compose
   input: compose.yaml
   stackName: docker-compose-uptime-kuma
+  packageVersion: 0.1.1
   targetPath: adapters/docker-compose/uptime-kuma
   source:
     type: docker-compose

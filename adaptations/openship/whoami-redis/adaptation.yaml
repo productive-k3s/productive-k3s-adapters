@@ -8,4 +8,5 @@ spec:
   adapter: compose
   input: compose.yaml
   stackName: openship-whoami-redis
+  packageVersion: 0.1.1
   targetPath: adapters/openship/whoami-redis
