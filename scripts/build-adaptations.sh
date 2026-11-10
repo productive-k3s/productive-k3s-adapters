@@ -30,6 +30,7 @@ yaml_metadata_value() {
     section == "metadata" && key == "metadata.name" && /^  name:/ { sub(/^  name:[[:space:]]*/, "", $0); print; exit }
     section == "spec" && key == "spec.stackName" && /^  stackName:/ { sub(/^  stackName:[[:space:]]*/, "", $0); print; exit }
     section == "spec" && key == "spec.input" && /^  input:/ { sub(/^  input:[[:space:]]*/, "", $0); print; exit }
+    section == "spec" && key == "spec.packageVersion" && /^  packageVersion:/ { sub(/^  packageVersion:[[:space:]]*/, "", $0); print; exit }
   ' "${file}"
 }
 
@@ -73,7 +74,7 @@ adaptation_dirs() {
 
 build_one() {
   local adaptation_dir="$1"
-  local metadata compose_input compose_source name stack_name version rel producer output_root source_dir package_dir artifact
+  local metadata compose_input compose_source name stack_name package_version version rel producer output_root source_dir package_dir artifact
 
   adaptation_dir="$(cd "${adaptation_dir}" && pwd)"
   metadata="${adaptation_dir}/adaptation.yaml"
@@ -87,9 +88,11 @@ build_one() {
   name="$(yaml_metadata_value "${metadata}" "metadata.name")"
   compose_input="$(yaml_metadata_value "${metadata}" "spec.input")"
   stack_name="$(yaml_metadata_value "${metadata}" "spec.stackName")"
+  package_version="$(yaml_metadata_value "${metadata}" "spec.packageVersion")"
   [[ -n "${name}" ]] || name="${rel#*/}"
   [[ -n "${compose_input}" ]] || compose_input="compose.yaml"
   [[ -n "${stack_name}" ]] || stack_name="${producer}-${name}"
+  [[ -n "${package_version}" ]] || package_version="0.1.0"
   [[ -f "${adaptation_dir}/${compose_input}" ]] || {
     echo "Missing adaptation input: ${adaptation_dir}/${compose_input}" >&2
     exit 1
@@ -105,6 +108,7 @@ build_one() {
   PYTHONPATH="${REPO_DIR}/src${PYTHONPATH:+:${PYTHONPATH}}" \
     "${PYTHON_BIN}" -m productive_k3s_adapters.cli convert compose "${compose_source}" \
       --name "${stack_name}" \
+      --package-version "${package_version}" \
       --output "${source_dir}"
 
   cp "${metadata}" "${source_dir}/adaptation.yaml"

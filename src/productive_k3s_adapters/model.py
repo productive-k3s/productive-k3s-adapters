@@ -37,3 +37,4 @@ class Application:
     services: list[Service]
     source_type: str
     source_file: str
+    package_version: str = "0.1.0"

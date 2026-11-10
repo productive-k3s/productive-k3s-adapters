@@ -45,6 +45,13 @@ def _compatibility() -> dict:
     }
 
 
+def _package_version(app: Application) -> str:
+    version = app.package_version.strip()
+    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?", version):
+        raise ValueError(f"Invalid adaptation package version: {app.package_version}")
+    return version
+
+
 def _addon_descriptor(app: Application, service: Service, resolution: Resolution) -> dict:
     exposure = {}
     if service.ports:
@@ -79,7 +86,7 @@ def _addon_descriptor(app: Application, service: Service, resolution: Resolution
         "kind": "Addon",
         "metadata": {
             "name": f"{app.name}-{service.name}",
-            "version": "0.1.0",
+            "version": _package_version(app),
             "sourceRevision": "development",
             "category": "generated",
         },
@@ -120,7 +127,7 @@ def _materials_lock(app: Application, service: Service, resolution: Resolution) 
         "metadata": {
             "owner": "productive-k3s-addons",
             "package": f"{app.name}-{service.name}",
-            "version": "0.1.0",
+            "version": _package_version(app),
         },
         "spec": {"materials": materials},
     }
@@ -262,7 +269,7 @@ def generate_stack(app: Application, output: str | Path, force: bool = False) ->
     stack = {
         "apiVersion": "stacks.productive-k3s.io/v1alpha1",
         "kind": "Stack",
-        "metadata": {"name": app.name, "version": "0.1.0", "sourceRevision": "development"},
+        "metadata": {"name": app.name, "version": _package_version(app), "sourceRevision": "development"},
         "spec": {
             "compatibility": _compatibility(),
             "generatedBy": "productive-k3s-adapters",

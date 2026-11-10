@@ -3,7 +3,7 @@ kind: MaterialsLock
 metadata:
   owner: productive-k3s-addons
   package: openship-whoami-redis
-  version: 0.1.0
+  version: 0.1.1
 spec:
   materials:
     - id: application-chart

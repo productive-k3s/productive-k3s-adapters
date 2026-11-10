@@ -10,10 +10,12 @@ from productive_k3s_adapters.resolvers import resolve_service
 from productive_k3s_adapters.stack import generate_stack
 
 
-def _application(source_type: str, path: str, name: str | None):
+def _application(source_type: str, path: str, name: str | None, package_version: str = "0.1.0"):
     if source_type != "compose":
         raise ValueError(f"Unsupported adapter: {source_type}")
-    return parse_compose(path, name=name)
+    app = parse_compose(path, name=name)
+    app.package_version = package_version
+    return app
 
 
 def _inspect(app) -> dict:
@@ -49,6 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     convert.add_argument("adapter", choices=["compose"])
     convert.add_argument("source")
     convert.add_argument("--name")
+    convert.add_argument("--package-version", default="0.1.0")
     convert.add_argument("--output", "-o", required=True)
     convert.add_argument("--force", action="store_true")
     return parser
@@ -57,7 +60,12 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        app = _application(args.adapter, args.source, getattr(args, "name", None))
+        app = _application(
+            args.adapter,
+            args.source,
+            getattr(args, "name", None),
+            getattr(args, "package_version", "0.1.0"),
+        )
         if args.command == "validate":
             print(f"OK: {args.source} ({len(app.services)} services)")
             return 0
